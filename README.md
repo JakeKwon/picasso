@@ -1,6 +1,13 @@
 # pr2_ws
 workspace for grasping with pr2 in gazebo
 
+###Dependencies
+Make sure ros is installed. Then install the pr2 and gazebo packages. 
+```
+sudo apt-get install ros-indigo-gazebo-*
+sudo apt-get install ros-indigo-pr2*
+```
+
 ###Installation
 ```
 git clone git@github.com:CURG/pr2_ws.git
