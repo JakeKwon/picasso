@@ -21,7 +21,7 @@ roslaunch pr2_launch pr2_gazebo.launch
 Now you should have the pr2 up inside gazebo.
 
 
-Common errors:
+###Common errors:
 Gazebo pops up but window is all black, and nothing is visble.
 ```
 Exception [Master.cc:50] Unable to start server[bind: Address already in use]. There is probably another Gazebo process running.
@@ -37,3 +37,6 @@ jvarley@skye:~/ros/pr2_ws$ ps aux | grep gz
 jvarley  21202  0.0  0.0  11748   940 pts/27   S+   11:05   0:00 grep --color=auto gz
 
 ```
+
+
+###Starting 
