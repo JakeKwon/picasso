@@ -1,0 +1,23 @@
+<launch>
+
+  <!--Arguments that can be passed into the launch from the cmd line-->
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="false"/>
+
+  <!--Parameters to be placed on the ros param server-->
+  <param name="/use_sim_time" value="true" />
+
+  <!--Start up the gazebo simulator with the PR2 robot inside it-->
+  <include file="$(find pr2_gazebo)/launch/pr2_empty_world.launch"/>
+
+  <!-- Add table to the world -->
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model" 
+   args="-urdf -file $(find pr2_launch)/models/table.urdf -model table -x 1.15 -y 0.5"
+   respawn="false" output="screen" />
+
+  <!-- Add Coke can to the world -->
+  <node name="spawn_object" pkg="gazebo_ros" type="spawn_model" 
+   args="-urdf -file $(find pr2_launch)/models/coke_can.urdf -model coke -x 0.745 -y 0.2 -z 0.55"
+   respawn="false" output="screen" />
+
+</launch>
