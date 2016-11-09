@@ -18,7 +18,7 @@ source src/pr2_launch/launch/set_env.sh
 roslaunch pr2_launch pr2_gazebo.launch
 ```
 
-Now you should have the pr2 up inside gazebo and it should look something like this:
+Now you should have the pr2 up inside gazebo.
 
 
 Common errors:
