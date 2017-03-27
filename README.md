@@ -44,3 +44,4 @@ jvarley@skye:~/ros/pr2_ws$ ps aux | grep gz
 jvarley  21202  0.0  0.0  11748   940 pts/27   S+   11:05   0:00 grep --color=auto gz
 
 ```
+# picasso

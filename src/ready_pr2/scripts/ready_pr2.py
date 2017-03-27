@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # coding: utf-8
 import sys
-
 import moveit_commander
 import rospy
 import roscpp
+
+import copy
+import geometry_msgs.msg
 
 def home_left_arm():
     mgc = moveit_commander.MoveGroupCommander("left_arm")
@@ -21,7 +23,6 @@ def home_right_arm():
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     jv = mgc.get_current_joint_values()
     jv[0] = -1
-
     mgc.set_joint_value_target(jv)
     p = mgc.plan()
     mgc.execute(p)
@@ -32,7 +33,41 @@ def home_head():
     jv[1] = 0.5
     mgc.set_joint_value_target(jv)
     p = mgc.plan()
-    mgc.execute(p)    
+    mgc.execute(p) 
+    
+    mgc.set_joint_value_target(jv)
+    mgc.plan()
+    p = mgc.plan()
+    mgc.execute(p)   
+
+def home_move_cartesian():
+    mgc = moveit_commander.MoveGroupCommander("right_arm")
+    waypoints = []
+    
+    # start with the current pose
+    waypoints.append(mgc.get_current_pose().pose)
+
+    # first orient gripper and move forward (+x)
+    wpose = geometry_msgs.msg.Pose()
+    wpose.orientation.w = 1.0
+    wpose.position.x = waypoints[0].position.x + 10
+    wpose.position.y = waypoints[0].position.y
+    wpose.position.z = waypoints[0].position.z
+    waypoints.append(copy.deepcopy(wpose))
+
+    # second move down
+    wpose.position.z -=10
+    waypoints.append(copy.deepcopy(wpose))
+
+    # third move to the side
+    wpose.position.y += 5
+    waypoints.append(copy.deepcopy(wpose))
+
+    (plan3, fraction) = mgc.compute_cartesian_path(
+                             waypoints,   # waypoints to follow
+                             0.01,        # eef_step
+                             0.0)         # jump_threshold
+
 
 
 if __name__ == "__main__":
@@ -53,6 +88,13 @@ if __name__ == "__main__":
     rospy.loginfo("right arm homed")
 
     home_head()
-    rospy.loginfo("head homed")    
+    rospy.loginfo("head homed")
+
+    home_move_cartesian()
+    rospy.loginfo("home_move_cartesian")   
+ 
+    #import IPython
+    #IPython.embed()
     
     moveit_commander.roscpp_shutdown()
+
