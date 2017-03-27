@@ -1,5 +1,5 @@
-# pr2_ws
-workspace for grasping with pr2 in gazebo
+# picasso
+workspace for drawing with pr2 in gazebo
 
 ###Dependencies
 Make sure ros is installed. Then install the pr2 and gazebo packages. 
@@ -28,6 +28,19 @@ roslaunch pr2_launch pr2_gazebo.launch
 Now you should have the pr2 up inside gazebo.
 
 
+###To run the python code in scripts (in a new tab)
+```
+source devel/setup.bash 
+roslaunch pr2_moveit_config move_group.launch 
+```
+###To run the python code in scripts continued (in a new tab)
+```
+source devel/setup.bash         
+cd src/ready_pr2/scripts
+python ready_pr2.py
+```
+
+
 ###Common errors:
 Gazebo pops up but window is all black, and nothing is visble.
 ```
@@ -44,4 +57,3 @@ jvarley@skye:~/ros/pr2_ws$ ps aux | grep gz
 jvarley  21202  0.0  0.0  11748   940 pts/27   S+   11:05   0:00 grep --color=auto gz
 
 ```
-# picasso
