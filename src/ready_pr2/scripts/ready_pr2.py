@@ -42,6 +42,8 @@ def home_head():
 
 def home_move_cartesian():
     mgc = moveit_commander.MoveGroupCommander("right_arm")
+    import IPython
+    IPython.embed()
     waypoints = []
     
     # start with the current pose
@@ -50,22 +52,22 @@ def home_move_cartesian():
     # first orient gripper and move forward (+x)
     wpose = geometry_msgs.msg.Pose()
     wpose.orientation.w = 1.0
-    wpose.position.x = waypoints[0].position.x + 10
+    wpose.position.x = waypoints[0].position.x - .1
     wpose.position.y = waypoints[0].position.y
     wpose.position.z = waypoints[0].position.z
     waypoints.append(copy.deepcopy(wpose))
 
     # second move down
-    wpose.position.z -=10
+    wpose.position.z -=.10
     waypoints.append(copy.deepcopy(wpose))
 
     # third move to the side
-    wpose.position.y += 5
+    wpose.position.y += .05
     waypoints.append(copy.deepcopy(wpose))
 
     (plan3, fraction) = mgc.compute_cartesian_path(
                              waypoints,   # waypoints to follow
-                             0.01,        # eef_step
+                             .01,        # eef_step
                              0.0)         # jump_threshold
 
 
