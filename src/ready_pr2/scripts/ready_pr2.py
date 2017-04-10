@@ -1,5 +1,12 @@
 #!/usr/bin/python
 # coding: utf-8
+
+
+#things to do
+# calibration: edges to waypoints ratio
+
+
+
 import sys
 import moveit_commander
 import rospy
@@ -7,6 +14,32 @@ import roscpp
 
 import copy
 import geometry_msgs.msg
+
+# edge detection
+import cv2
+import numpy as np
+
+def edgeDetect(imgFile):
+    img = cv2.imread(imgFile)
+    img = cv2.blur(img,(3,3))
+    #cv2.imshow('dave',img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray,50,150,apertureSize = 3)
+    
+    #cv2.imshow('edges',edges)
+
+    lines = cv2.HoughLinesP(edges,1,np.pi/90,10,10,35,10)
+
+
+    #for x1,y1,x2,y2 in lines[0]:
+    #    cv2.line(img,(x1,y1),(x2,y2),(0,0,0),2)
+    
+    #cv2.imshow('houghlines3.jpg',img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+    return lines[0]
 
 def home_left_arm():
     mgc = moveit_commander.MoveGroupCommander("left_arm")
@@ -40,7 +73,7 @@ def home_head():
     p = mgc.plan()
     mgc.execute(p)   
 
-def home_move_cartesian():
+def home_move_cartesian(edges):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     import IPython
     IPython.embed()
@@ -74,6 +107,8 @@ def home_move_cartesian():
 
 if __name__ == "__main__":
     
+    # imgFile commandline goes herer
+
     node_name = "ready_pr2"
 
     moveit_commander.roscpp_initialize(sys.argv)
@@ -91,8 +126,11 @@ if __name__ == "__main__":
 
     home_head()
     rospy.loginfo("head homed")
+    
 
-    home_move_cartesian()
+    edges = edgeDetect('dave.jpg')
+
+    home_move_cartesian(edges)
     rospy.loginfo("home_move_cartesian")   
  
     #import IPython
