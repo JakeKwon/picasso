@@ -39,6 +39,7 @@ def edgeDetect(imgFile):
     #cv2.imshow('houghlines3.jpg',img)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
+    print lines[0]
     return lines[0]
 
 def home_left_arm():
@@ -75,8 +76,8 @@ def home_head():
 
 def home_move_cartesian(edges):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
-    import IPython
-    IPython.embed()
+    #import IPython
+    #IPython.embed()
     waypoints = []
     
     # start with the current pose
@@ -90,13 +91,19 @@ def home_move_cartesian(edges):
     wpose.position.z = waypoints[0].position.z
     waypoints.append(copy.deepcopy(wpose))
 
+
+
+
     # second move down
-    wpose.position.z -=.10
-    waypoints.append(copy.deepcopy(wpose))
+    #wpose.position.z -=.10
+    #waypoints.append(copy.deepcopy(wpose))
 
     # third move to the side
-    wpose.position.y += .05
-    waypoints.append(copy.deepcopy(wpose))
+    #wpose.position.y += .05
+    #waypoints.append(copy.deepcopy(wpose))
+
+
+
 
     (plan3, fraction) = mgc.compute_cartesian_path(
                              waypoints,   # waypoints to follow
@@ -124,7 +131,7 @@ if __name__ == "__main__":
     home_right_arm()
     rospy.loginfo("right arm homed")
 
-    home_head()
+    #home_head()
     rospy.loginfo("head homed")
     
 

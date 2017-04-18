@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 def edgeDetect():
-    img = cv2.imread('rect.png')
+    img = cv2.imread('dave.jpg')
     img = cv2.blur(img,(3,3))
     #cv2.imshow('dave',img)
     #cv2.waitKey(0)
