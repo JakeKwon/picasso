@@ -74,7 +74,12 @@ def home_head():
     p = mgc.plan()
     mgc.execute(p)   
 
-def home_move_cartesian(edges):
+def get_corners():
+    mgc = moveit_commander.MoveGroupCommander("right_arm")
+    print mgc.get_current_pose().pose
+    return mgc.get_current_pose().pose
+
+def home_move_cartesian(edges, bottomLeft, topRight):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     #import IPython
     #IPython.embed()
@@ -125,21 +130,27 @@ if __name__ == "__main__":
     rc = moveit_commander.RobotCommander()
     rospy.loginfo("robot commander is initialized")
 
-    home_left_arm()
-    rospy.loginfo("left arm homed")
-
+    #home_left_arm()
+    #rospy.loginfo("left arm homed")
+    
     home_right_arm()
     rospy.loginfo("right arm homed")
-
+    
     #home_head()
-    rospy.loginfo("head homed")
+    #rospy.loginfo("head homed")
     
 
     edges = edgeDetect('dave.jpg')
+    
+    raw_input('press enter to get bottom left corner: ')
+    bottomLeft = get_corners()
 
-    home_move_cartesian(edges)
+    raw_input('press enter to get top right corner: ')
+    topRight = get_corners()
+
+    home_move_cartesian(edges, bottomLeft, topRight)
     rospy.loginfo("home_move_cartesian")   
- 
+
     #import IPython
     #IPython.embed()
     
