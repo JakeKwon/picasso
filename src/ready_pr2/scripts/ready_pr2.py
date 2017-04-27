@@ -18,6 +18,9 @@ import geometry_msgs.msg
 # edge detection
 import cv2
 import numpy as np
+import transform_points
+import nearest_neighbor
+
 
 def edgeDetect(imgFile):
     img = cv2.imread(imgFile)
@@ -79,18 +82,31 @@ def get_corners():
     print mgc.get_current_pose().pose
     return mgc.get_current_pose().pose
 
-def home_move_cartesian(edges, bottomLeft, topRight):
+def home_move_cartesian(edges, bottomLeft, topLeft, topRight):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     #import IPython
     #IPython.embed()
+
+    print "------------------------------------------"
+    print transform_points(np.eye(4),np.eye(4))
+
+
+
+
     waypoints = []
     
+
+
+
+
     # start with the current pose
     waypoints.append(mgc.get_current_pose().pose)
 
-    # first orient gripper and move forward (+x)
+    
     wpose = geometry_msgs.msg.Pose()
     wpose.orientation.w = 1.0
+    
+
     wpose.position.x = waypoints[0].position.x - .1
     wpose.position.y = waypoints[0].position.y
     wpose.position.z = waypoints[0].position.z
@@ -98,6 +114,14 @@ def home_move_cartesian(edges, bottomLeft, topRight):
 
 
 
+
+    # first orient gripper and move forward (+x)
+    #wpose = geometry_msgs.msg.Pose()
+    #wpose.orientation.w = 1.0
+    #wpose.position.x = waypoints[0].position.x - .1
+    #wpose.position.y = waypoints[0].position.y
+    #wpose.position.z = waypoints[0].position.z
+    #waypoints.append(copy.deepcopy(wpose))
 
     # second move down
     #wpose.position.z -=.10
@@ -144,11 +168,14 @@ if __name__ == "__main__":
     
     raw_input('press enter to get bottom left corner: ')
     bottomLeft = get_corners()
+    
+    raw_input('press enter to get top left corner: ')
+    topLeft = get_corners()
 
     raw_input('press enter to get top right corner: ')
     topRight = get_corners()
 
-    home_move_cartesian(edges, bottomLeft, topRight)
+    home_move_cartesian(edges, bottomLeft, topLeft, topRight)
     rospy.loginfo("home_move_cartesian")   
 
     #import IPython
