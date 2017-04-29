@@ -22,9 +22,11 @@ import transform_points as t
 import nearest_neighbor as n
 
 def edgeDetect(imgFile):
-    img = cv2.imread(imgFile)
-    img = cv2.blur(img,(3,3))
 
+    img = cv2.imread(imgFile)
+    img = cv2.flip(img,0)
+    img = cv2.blur(img,(3,3))
+    
     #cv2.imshow('dave',img)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
@@ -84,6 +86,7 @@ def get_corners():
 
 def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
+    mgc.set_goal_orientation_tolerance(0.5)
     #import IPython
     #IPython.embed()
 
@@ -100,19 +103,19 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     wpose = geometry_msgs.msg.Pose()
     wpose.orientation.w = 1.0
     
-    a = np.array([0,1,1])
-    b = np.array([0,0,1])
-    c = np.array([1,0,1])
+    a = np.array([0,0.3,.5])
+    b = np.array([0,0,.5])
+    c = np.array([.3,0,.5])
     
     transformed_edges = t.transform_points(a, b, c, reshaped_edges.T)
     #transformed_edges = transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
     
     for i in range(transformed_edges.shape[1]):
-	wpose.position.x = transformed_edges[0,i]
-    	wpose.position.y = transformed_edges[1,i]
-    	wpose.position.z = transformed_edges[2,i]
+	wpose.position.x = transformed_edges[2,i]
+    	wpose.position.y = transformed_edges[0,i]
+    	wpose.position.z = transformed_edges[1,i]
     	waypoints.append(copy.deepcopy(wpose))
-    print waypoints
+    #print waypoints
     
   
 
@@ -142,9 +145,16 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
                              0.0)         # jump_threshold
     print fraction
     
-    #mgc.execute(plan3)
+    mgc.execute(plan3)
     #rospy.sleep(5)
 
+def gripper():
+    mgc = moveit_commander.MoveGroupCommander("right_gripper")
+    jv = mgc.get_current_joint_values()
+    #jv = [1.0, 1.0, 0.477, 0.477, 0.477, 0.477, 0.04]
+    mgc.set_joint_value_target(jv)
+    p = mgc.plan()
+    mgc.execute(p)
 
 if __name__ == "__main__":
     
@@ -159,9 +169,11 @@ if __name__ == "__main__":
     rc = moveit_commander.RobotCommander()
     rospy.loginfo("robot commander is initialized")
 
-    #home_left_arm()
-    #rospy.loginfo("left arm homed")
+    home_left_arm()
+    rospy.loginfo("left arm homed")
     
+    gripper()
+    rospy.loginfo("gripper")
     #home_right_arm()
     #rospy.loginfo("right arm homed")
     
