@@ -67,9 +67,18 @@ def sort_lines(mat):
 
     return sorted_mat
 
+def reshape(mat):
+    mat = np.reshape(mat,(mat.shape[0]*2,2))
+    mat = np.concatenate((mat,np.zeros((mat.shape[0],1))),axis=1)
+    return mat
+'''
 mat = edgeDetect()
 #print mat.shape
 sorted_mat = sort_lines(mat)
+print sorted_mat
+reshaped = reshape(sorted_mat)
+print reshaped
+
 sorted_list = sorted_mat.reshape(sorted_mat.shape[0]*2,2)
 x = np.append(sorted_list[:,0],sorted_list[0,0])
 y = np.append(sorted_list[:,1],sorted_list[0,1])
@@ -80,3 +89,4 @@ plt.gca().invert_yaxis()
 plt.axis('equal')
 plt.plot(x,y)
 plt.show()
+'''

@@ -6,10 +6,10 @@ def transform_points(a,b,c,mat):
     j = (a-b)/np.linalg.norm(a-b)
     k = np.cross(i,j)
     rot_mat = np.matrix([i,j,k]).T
-    print "rotation matrix:\n",rot_mat
-    print "img:\n", mat
+    #print "rotation matrix:\n",rot_mat
+    #print "img:\n", mat
     rotated_img = np.dot(rot_mat,mat)
-    print "rotated img:\n",rotated_img
+    #print "rotated img:\n",rotated_img
 
     return np.add(rotated_img,np.matrix(b).T)
 
@@ -39,10 +39,11 @@ def computeHomography(src_pts_nx2, dest_pts_nx2):
         [H_elem(7), H_elem(8), 1]])
   
   return H3x3
-'''
+
 print "------------------------------------------"
 
 a = np.array([0,1,1])
 b = np.array([0,0,1])
 c = np.array([1,0,1])
 print transform_points(a,b,c,np.matrix([[1,0,0],[2,0,0],[3,0,0]]).T)
+'''
