@@ -81,9 +81,14 @@ def home_head():
 
 def get_corners():
     mgc = moveit_commander.MoveGroupCommander("right_arm")
-    #print mgc.get_current_pose().pose
+    print mgc.get_current_pose().pose
     return mgc.get_current_pose().pose
-
+def get_position(pose):
+    vector = np.zeros(3)
+    vector[0] = pose.position.x
+    vector[1] = pose.position.y
+    vector[2] = pose.position.z
+    return vector
 def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     mgc.set_goal_orientation_tolerance(0.5)
@@ -92,9 +97,7 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
 
    
     waypoints = []
-    sorted_edges = n.sort_lines(edges)
-    reshaped_edges = n.reshape(sorted_edges)
-    reshaped_edges *= (0.4/max_side)
+    
 
 
 
@@ -103,17 +106,31 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     wpose = geometry_msgs.msg.Pose()
     wpose.orientation.w = 1.0
     
-    a = np.array([0,0.3,.5])
-    b = np.array([0,0,.5])
-    c = np.array([.3,0,.5])
+    a = np.array([0,0.8,.5])
+    b = np.array([0,.5,.5])
+    c = np.array([.3,.5,.5])
     
-    transformed_edges = t.transform_points(a, b, c, reshaped_edges.T)
-    #transformed_edges = transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
+    orientation = topLeft.orientation
+
+
+    #transformed_edges = t.transform_points(a, b, c, reshaped_edges.T)
+    topLeft = get_position(topLeft)
+    bottomLeft = get_position(bottomLeft)
+    bottomRight = get_position(bottomRight)
+
+    sorted_edges = n.sort_lines(edges)
+    reshaped_edges = n.reshape(sorted_edges)
+    min_side = min(np.linalg.norm(topLeft-bottomLeft),np.linalg.norm(bottomRight-bottomLeft))
+    reshaped_edges *= (min_side/max_side)
+
+    transformed_edges = t.transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
+    
     
     for i in range(transformed_edges.shape[1]):
-	wpose.position.x = transformed_edges[2,i]
-    	wpose.position.y = transformed_edges[0,i]
-    	wpose.position.z = transformed_edges[1,i]
+	wpose.position.x = transformed_edges[0,i]
+    	wpose.position.y = transformed_edges[1,i]
+    	wpose.position.z = transformed_edges[2,i]
+        wpose.orientation = orientation
     	waypoints.append(copy.deepcopy(wpose))
     #print waypoints
     
@@ -169,11 +186,14 @@ if __name__ == "__main__":
     rc = moveit_commander.RobotCommander()
     rospy.loginfo("robot commander is initialized")
 
-    home_left_arm()
-    rospy.loginfo("left arm homed")
+    #home_left_arm()
+    #rospy.loginfo("left arm homed")
     
-    gripper()
-    rospy.loginfo("gripper")
+    #gripper()
+    #rospy.loginfo("gripper")
+    
+
+
     #home_right_arm()
     #rospy.loginfo("right arm homed")
     
@@ -191,6 +211,8 @@ if __name__ == "__main__":
 
     raw_input('press enter to get bottom right corner: ')
     bottomRight = get_corners()
+
+    raw_input('press enter after killing mannequin mode: ')
 
     home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side)
     rospy.loginfo("home_move_cartesian")   

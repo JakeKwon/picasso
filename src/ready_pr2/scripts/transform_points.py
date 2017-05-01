@@ -10,7 +10,7 @@ def transform_points(a,b,c,mat):
     #print "img:\n", mat
     rotated_img = np.dot(rot_mat,mat)
     #print "rotated img:\n",rotated_img
-
+    
     return np.add(rotated_img,np.matrix(b).T)
 
 
