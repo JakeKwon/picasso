@@ -11,6 +11,7 @@ import sys
 import moveit_commander
 import rospy
 import roscpp
+import roslaunch
 
 import copy
 import geometry_msgs.msg
@@ -223,7 +224,11 @@ if __name__ == "__main__":
     #home_head()
     #rospy.loginfo("head homed")
     
-   
+    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+    roslaunch.configure_logging(uuid)
+    launch = roslaunch.parent.ROSLaunchParent(uuid,
+     ["/opt/ros/indigo/share/pr2_mannequin_mode/launch/pr2_mannequin_mode.launch"])
+    launch.start()
     
     raw_input('press enter to get top left corner: ')
     topLeft = get_corners()
@@ -234,8 +239,10 @@ if __name__ == "__main__":
     raw_input('press enter to get bottom right corner: ')
     bottomRight = get_corners()
 
-    raw_input('press enter after killing mannequin mode and initiating joystick mode: ')
+    launch.shutdown()
+    #raw_input('press enter after killing mannequin mode and initiating joystick mode: ')
     
+
     img = cv2.imread('dave.jpg')
     cmy = split_channels(img)
     for i in range(3):
