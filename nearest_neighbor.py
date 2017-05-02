@@ -3,11 +3,9 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 def rgb_to_cmy(img):
-    print "-----------------------------------------------"
     #cmy = np.matrix(np.ones(colors.shape))
     cmy = 1.0-img/256.0
     min_cmy=np.min(cmy,axis=2)
-    print min_cmy
     for i in range(3):
 
       cmy[:,:,i] = (cmy[:,:,i]-min_cmy)/(1.0-min_cmy)
