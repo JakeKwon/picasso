@@ -19,8 +19,17 @@ import geometry_msgs.msg
 # edge detection
 import cv2
 import numpy as np
-import transform_points as t
 import nearest_neighbor as n
+import numpy as np
+import scipy
+
+def transform_points(a,b,c,mat):
+    i = (c-b)/np.linalg.norm(b-c)
+    j = (a-b)/np.linalg.norm(a-b)
+    k = np.cross(i,j)
+    rot_mat = np.matrix([i,j,k]).T
+    rotated_img = np.dot(rot_mat,mat)    
+    return np.add(rotated_img,np.matrix(b).T)
 
 def rgb_to_cmy(img):
     cmy = 1.0-img/256.0
@@ -88,7 +97,7 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     #transform the edges so that they are in 3D space
     min_side = min(np.linalg.norm(topLeft-bottomLeft),np.linalg.norm(bottomRight-bottomLeft))
     reshaped_edges *= (min_side/max_side)
-    transformed_edges = t.transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
+    transformed_edges = transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
     
     #add lines as waypoints
     for i in range(transformed_edges.shape[1]):
