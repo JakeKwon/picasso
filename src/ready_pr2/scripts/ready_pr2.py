@@ -23,7 +23,6 @@ import transform_points as t
 import nearest_neighbor as n
 
 def rgb_to_cmy(img):
-    #cmy = np.matrix(np.ones(colors.shape))
     cmy = 1.0-img/256.0
     min_cmy=np.min(cmy,axis=2)
     for i in range(3):
@@ -52,59 +51,15 @@ def edgeDetect(img):
     img = np.ones(img.shape)
     for x1,y1,x2,y2 in lines[0]:
         cv2.line(img,(x1,y1),(x2,y2),(0,0,0),2)
-    #print lines[0].shape
-    #cv2.imshow('img',img)
-    #cv2.waitKey()
     return lines[0],np.max(img.shape[0:2])
-'''
-    img = cv2.imread(imgFile)
-    img = cv2.flip(img,0)
-    img = cv2.blur(img,(3,3))
-    
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray,50,150,apertureSize = 3)
-
-    lines = cv2.HoughLinesP(edges,1,np.pi/90,10,10,35,10)
-
-    return lines[0],np.max(img.shape[0:2])
-'''
-def home_left_arm():
-    mgc = moveit_commander.MoveGroupCommander("left_arm")
-    mgc.get_current_joint_values()
-    jv = mgc.get_current_joint_values()
-    jv[0]=1.0
-
-    mgc.set_joint_value_target(jv)
-    mgc.plan()
-    p = mgc.plan()
-    mgc.execute(p)
-
-def home_right_arm():
-    mgc = moveit_commander.MoveGroupCommander("right_arm")
-    jv = mgc.get_current_joint_values()
-    jv[0] = -1
-    mgc.set_joint_value_target(jv)
-    p = mgc.plan()
-    mgc.execute(p)
-
-def home_head():
-    mgc = moveit_commander.MoveGroupCommander("head")
-    jv = mgc.get_current_joint_values()
-    jv[1] = 0.5
-    mgc.set_joint_value_target(jv)
-    p = mgc.plan()
-    mgc.execute(p) 
-    
-    mgc.set_joint_value_target(jv)
-    mgc.plan()
-    p = mgc.plan()
-    mgc.execute(p)   
 
 def get_corners():
+    '''returns the current pose of the end effector'''
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     print mgc.get_current_pose().pose
     return mgc.get_current_pose().pose
 def get_position(pose):
+    '''returns the position of the end effector as a vector'''
     vector = np.zeros(3)
     vector[0] = pose.position.x
     vector[1] = pose.position.y
@@ -113,40 +68,29 @@ def get_position(pose):
 def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     mgc.set_goal_orientation_tolerance(0.5)
-    #import IPython
-    #IPython.embed()
-
-   
-    waypoints = []
+  
+	waypoints = []
     
-
-
-
     # start with the current pose
     waypoints.append(mgc.get_current_pose().pose)
     wpose = geometry_msgs.msg.Pose()
     wpose.orientation.w = 1.0
-    
-    a = np.array([0,0.8,.5])
-    b = np.array([0,.5,.5])
-    c = np.array([.3,.5,.5])
-    
     orientation = topLeft.orientation
-
-
-    #transformed_edges = t.transform_points(a, b, c, reshaped_edges.T)
+    
+    #get positions of each corner as a vector
     topLeft = get_position(topLeft)
     bottomLeft = get_position(bottomLeft)
     bottomRight = get_position(bottomRight)
-
+    
+    #sort the lines for planning 
     sorted_edges = n.sort_lines(edges)
     reshaped_edges = n.reshape(sorted_edges)
+    #transform the edges so that they are in 3D space
     min_side = min(np.linalg.norm(topLeft-bottomLeft),np.linalg.norm(bottomRight-bottomLeft))
     reshaped_edges *= (min_side/max_side)
-
     transformed_edges = t.transform_points(topLeft, bottomLeft, bottomRight,reshaped_edges.T)
     
-    
+    #add lines as waypoints
     for i in range(transformed_edges.shape[1]):
 	wpose.position.x = transformed_edges[0,i]
     	wpose.position.y = transformed_edges[1,i]
@@ -155,31 +99,10 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     	waypoints.append(copy.deepcopy(wpose))
         if(i%2==1):
             wpose.position.x -=.03
-            waypoints.append(copy.deepcopy(wpose))
-    #print waypoints
-    
-  
-
-    '''
-    # first orient gripper and move forward (+x)
-    wpose = geometry_msgs.msg.Pose()
-    wpose.orientation.w = 1.0
-    wpose.position.x = waypoints[0].position.x - .1
-    wpose.position.y = waypoints[0].position.y
-    wpose.position.z = waypoints[0].position.z
-    waypoints.append(copy.deepcopy(wpose))
-    print wpose.position
-    # second move down
-    wpose.position.z -=.10
-    waypoints.append(copy.deepcopy(wpose))
-
-    # third move to the side
-    wpose.position.y += .05
-    waypoints.append(copy.deepcopy(wpose))
-    '''
+            waypoints.append(copy.deepcopy(wpose))  
 
 
-
+    #path planning
     (plan3, fraction) = mgc.compute_cartesian_path(
                              waypoints,   # waypoints to follow
                              .001,        # eef_step
@@ -189,17 +112,9 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     mgc.execute(plan3)
     #rospy.sleep(5)
 
-def gripper():
-    mgc = moveit_commander.MoveGroupCommander("right_gripper")
-    jv = mgc.get_current_joint_values()
-    #jv = [1.0, 1.0, 0.477, 0.477, 0.477, 0.477, 0.04]
-    mgc.set_joint_value_target(jv)
-    p = mgc.plan()
-    mgc.execute(p)
-
 if __name__ == "__main__":
     
-    # imgFile commandline goes herer
+    # imgFile commandline goes here
 
     node_name = "ready_pr2"
 
@@ -210,26 +125,13 @@ if __name__ == "__main__":
     rc = moveit_commander.RobotCommander()
     rospy.loginfo("robot commander is initialized")
 
-    #home_left_arm()
-    #rospy.loginfo("left arm homed")
-    
-    #gripper()
-    #rospy.loginfo("gripper")
-    
-
-
-    #home_right_arm()
-    #rospy.loginfo("right arm homed")
-    
-    #home_head()
-    #rospy.loginfo("head homed")
-    
+    #put the PR2 in mannequin mode for calibration
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     roslaunch.configure_logging(uuid)
     launch = roslaunch.parent.ROSLaunchParent(uuid,
      ["/opt/ros/indigo/share/pr2_mannequin_mode/launch/pr2_mannequin_mode.launch"])
     launch.start()
-    
+    #get corners for calibration
     raw_input('press enter to get top left corner: ')
     topLeft = get_corners()
 
@@ -238,11 +140,10 @@ if __name__ == "__main__":
 
     raw_input('press enter to get bottom right corner: ')
     bottomRight = get_corners()
-
+    #shutdown mannequin mode
     launch.shutdown()
-    #raw_input('press enter after killing mannequin mode and initiating joystick mode: ')
     
-
+    #draw image
     img = cv2.imread('dave.jpg')
     cmy = split_channels(img)
     for i in range(3):
@@ -250,12 +151,6 @@ if __name__ == "__main__":
         home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side)
         rospy.loginfo("finished color")
         raw_input('press enter after changing color') 
-    #edges,max_side = edgeDetect('dave.jpg')
-
-      
-
-    #import IPython
-    #IPython.embed()
     
     moveit_commander.roscpp_shutdown()
 
