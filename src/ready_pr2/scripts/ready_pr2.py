@@ -19,8 +19,6 @@ import geometry_msgs.msg
 # edge detection
 import cv2
 import numpy as np
-import nearest_neighbor as n
-import numpy as np
 import scipy
 
 def sort_lines(mat):
