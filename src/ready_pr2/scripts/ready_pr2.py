@@ -76,7 +76,8 @@ def rgb_to_cmy(img):
     min_cmy=np.min(cmy,axis=2)
     for i in range(3):
 
-      cmy[:,:,i] = (cmy[:,:,i]-min_cmy)/(1.0-min_cmy)
+      cmy[:,:,i] = (cmy[:,:,i]-min_cmy)/(1.0-min_cmy+1e-10)
+    cmy *=.9
     return (cmy*255).astype('uint8')
 
 def split_channels(img):
@@ -91,12 +92,11 @@ def split_channels(img):
     return [c,m,y]
 
 def edgeDetect(img):
+    img = cv2.flip(img,0)
     imgShape = img.shape[0:2]
-
     imgShape= np.multiply(imgShape,894.0/np.max(imgShape)).astype(int)
     
     img = cv2.resize(img,(imgShape[1],imgShape[0]))
-   
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     #cv2.imshow('grayscale',gray)
     #cv2.waitKey()
@@ -111,7 +111,7 @@ def edgeDetect(img):
     #cv2.waitKey()
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,50,10)
+    lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,35,10)
     
     img = np.ones(img.shape)
    
@@ -121,7 +121,7 @@ def edgeDetect(img):
     #cv2.imshow('output',img)
     #cv2.waitKey()
     #cv2.destroyAllWindows()
-    return lines[0]
+    return lines[0],np.max(img.shape[0:2])
 
 def get_corners():
     '''returns the current pose of the end effector'''
@@ -138,8 +138,7 @@ def get_position(pose):
 def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     mgc = moveit_commander.MoveGroupCommander("right_arm")
     mgc.set_goal_orientation_tolerance(0.5)
-  
-	waypoints = []
+    waypoints = []
     
     # start with the current pose
     waypoints.append(mgc.get_current_pose().pose)
@@ -163,12 +162,13 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     #add lines as waypoints
     for i in range(transformed_edges.shape[1]):
 	wpose.position.x = transformed_edges[0,i]
-    	wpose.position.y = transformed_edges[1,i]
+    	wpose.position.y = transformed_edges[1,i] + 0.002
     	wpose.position.z = transformed_edges[2,i]
+
         wpose.orientation = orientation
     	waypoints.append(copy.deepcopy(wpose))
         if(i%2==1):
-            wpose.position.x -=.03
+            wpose.position.y -=.016
             waypoints.append(copy.deepcopy(wpose))  
 
 
@@ -211,16 +211,25 @@ if __name__ == "__main__":
     raw_input('press enter to get bottom right corner: ')
     bottomRight = get_corners()
     #shutdown mannequin mode
+    raw_input('press enter when ready')
     launch.shutdown()
     
+    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+    roslaunch.configure_logging(uuid)
+    launch = roslaunch.parent.ROSLaunchParent(uuid,
+     ["/opt/ros/indigo/share/pr2_teleop/launch/teleop_joystick.launch"])
+    launch.start()
     #draw image
-    img = cv2.imread('dave.jpg')
+    img = cv2.imread('allen_headshot.jpg')
     cmy = split_channels(img)
     for i in range(3):
         edges,max_side = edgeDetect(cmy[i])
+        #cv2.imshow('img',cmy[i])
+        #cv2.waitKey()
         home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side)
         rospy.loginfo("finished color")
         raw_input('press enter after changing color') 
     
+    launch.shutdown()
     moveit_commander.roscpp_shutdown()
 
