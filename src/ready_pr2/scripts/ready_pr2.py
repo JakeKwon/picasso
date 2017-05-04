@@ -23,6 +23,48 @@ import nearest_neighbor as n
 import numpy as np
 import scipy
 
+def sort_lines(mat):
+    num_lines = mat.shape[0]
+
+    #mat = np.random.rand(num_lines,4)
+    visited = np.zeros(num_lines).astype(bool)
+    nearest_neighbor = np.zeros(num_lines).astype(int)-1
+    point1 = mat[:,:2]
+    point2 = mat[:,2:]
+    middle = np.add(point1,point2)/2
+    curr_point = 0
+
+    #traverse the midpoints to find the next closest midpoint
+    sorted_mat=np.zeros((num_lines,4))
+    while np.sum(visited.astype(int))<num_lines-1:
+        sorted_mat[np.sum(visited.astype(int)),:]= mat[curr_point]
+
+        visited[curr_point]=True
+        idx = np.arange(num_lines)[np.logical_not(visited)]
+        dist = np.linalg.norm(middle[np.logical_not(visited)]-middle[curr_point],axis=1)
+        nn = idx[np.argmin(dist)]
+
+        nearest_neighbor[curr_point]=nn
+        curr_point = nn
+
+    sorted_mat[-1]= mat[np.logical_not(visited)]
+    #print sorted_mat
+
+    #sort the endpoints so that the closer points are first
+    for  i in range(num_lines-1):
+        smaller = np.argmin( np.linalg.norm(np.subtract(sorted_mat[i,2:],sorted_mat[i+1,:].reshape(2,2)),axis=1))
+        if smaller:
+
+            smaller = sorted_mat[i+1,2:].copy()
+            sorted_mat[i+1,2:]=sorted_mat[i+1,:2].copy()
+            sorted_mat[i+1,:2] = smaller
+
+    return sorted_mat
+
+def reshape(mat):
+    mat = np.reshape(mat,(mat.shape[0]*2,2))
+    mat = np.concatenate((mat,np.zeros((mat.shape[0],1))),axis=1)
+    return mat
 def transform_points(a,b,c,mat):
     i = (c-b)/np.linalg.norm(b-c)
     j = (a-b)/np.linalg.norm(a-b)
@@ -92,8 +134,8 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     bottomRight = get_position(bottomRight)
     
     #sort the lines for planning 
-    sorted_edges = n.sort_lines(edges)
-    reshaped_edges = n.reshape(sorted_edges)
+    sorted_edges = sort_lines(edges)
+    reshaped_edges = reshape(sorted_edges)
     #transform the edges so that they are in 3D space
     min_side = min(np.linalg.norm(topLeft-bottomLeft),np.linalg.norm(bottomRight-bottomLeft))
     reshaped_edges *= (min_side/max_side)
