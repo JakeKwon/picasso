@@ -91,16 +91,37 @@ def split_channels(img):
     return [c,m,y]
 
 def edgeDetect(img):
-    img = cv2.flip(img,0)
-    img = cv2.blur(img,(5,5))
-    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray,2000,2000,apertureSize =7)
+    imgShape = img.shape[0:2]
+
+    imgShape= np.multiply(imgShape,894.0/np.max(imgShape)).astype(int)
     
-    lines = cv2.HoughLinesP(edges,1,np.pi/90,10,10,40,10)
+    img = cv2.resize(img,(imgShape[1],imgShape[0]))
+   
+    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    #cv2.imshow('grayscale',gray)
+    #cv2.waitKey()
+    ret, thresh = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
+    #cv2.imshow('thresh',thresh)
+    #cv2.waitKey()
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img = np.zeros(img.shape).astype('uint8')
+
+    cv2.drawContours(img, contours, -1, (255,255,255), 3)
+    #cv2.imshow('contours',img)
+    #cv2.waitKey()
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,50,10)
+    
     img = np.ones(img.shape)
+   
     for x1,y1,x2,y2 in lines[0]:
         cv2.line(img,(x1,y1),(x2,y2),(0,0,0),2)
-    return lines[0],np.max(img.shape[0:2])
+    print lines[0].shape
+    #cv2.imshow('output',img)
+    #cv2.waitKey()
+    #cv2.destroyAllWindows()
+    return lines[0]
 
 def get_corners():
     '''returns the current pose of the end effector'''
