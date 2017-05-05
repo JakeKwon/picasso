@@ -22,6 +22,7 @@ import numpy as np
 import scipy
 
 def sort_lines(mat):
+    #sorts the lines of the array so that the closer lines are drawn closer in time to each other
     num_lines = mat.shape[0]
 
     #mat = np.random.rand(num_lines,4)
@@ -60,10 +61,13 @@ def sort_lines(mat):
     return sorted_mat
 
 def reshape(mat):
+	#shapes lines into 2 endpoints instead
     mat = np.reshape(mat,(mat.shape[0]*2,2))
     mat = np.concatenate((mat,np.zeros((mat.shape[0],1))),axis=1)
     return mat
 def transform_points(a,b,c,mat):
+	#rotates and translates mat such that it fits on the plane formed by points a,b,c
+	#a is the top left corner, b is the bottom left corner, is the bottom right corner
     i = (c-b)/np.linalg.norm(b-c)
     j = (a-b)/np.linalg.norm(a-b)
     k = np.cross(i,j)
@@ -72,6 +76,7 @@ def transform_points(a,b,c,mat):
     return np.add(rotated_img,np.matrix(b).T)
 
 def rgb_to_cmy(img):
+	#change rgb to cmy colorspace
     cmy = 1.0-img/256.0
     min_cmy=np.min(cmy,axis=2)
     for i in range(3):
@@ -81,6 +86,7 @@ def rgb_to_cmy(img):
     return (cmy*255).astype('uint8')
 
 def split_channels(img):
+	#split colors channels of the image and make 3 different images
     cmy = rgb_to_cmy(img)
     c = np.copy(cmy)
     c[:,:,1:] = 0
@@ -92,35 +98,27 @@ def split_channels(img):
     return [c,m,y]
 
 def edgeDetect(img):
+	#extract contours and then lines from the contours of the image
+	
     img = cv2.flip(img,0)
     imgShape = img.shape[0:2]
+	#resize the image so that all input images are approximately the same size
     imgShape= np.multiply(imgShape,894.0/np.max(imgShape)).astype(int)
-    
     img = cv2.resize(img,(imgShape[1],imgShape[0]))
+	#get image contours
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    #cv2.imshow('grayscale',gray)
-    #cv2.waitKey()
     ret, thresh = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
-    #cv2.imshow('thresh',thresh)
-    #cv2.waitKey()
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img = np.zeros(img.shape).astype('uint8')
-
     cv2.drawContours(img, contours, -1, (255,255,255), 3)
-    #cv2.imshow('contours',img)
-    #cv2.waitKey()
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
+	#extract lines from the contours
     lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,35,10)
-    
     img = np.ones(img.shape)
-   
-    for x1,y1,x2,y2 in lines[0]:
+	for x1,y1,x2,y2 in lines[0]:
         cv2.line(img,(x1,y1),(x2,y2),(0,0,0),2)
     print lines[0].shape
-    #cv2.imshow('output',img)
-    #cv2.waitKey()
-    #cv2.destroyAllWindows()
+    
     return lines[0],np.max(img.shape[0:2])
 
 def get_corners():
@@ -184,8 +182,6 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
 
 if __name__ == "__main__":
     
-    # imgFile commandline goes here
-
     node_name = "ready_pr2"
 
     moveit_commander.roscpp_initialize(sys.argv)
@@ -224,8 +220,7 @@ if __name__ == "__main__":
     cmy = split_channels(img)
     for i in range(3):
         edges,max_side = edgeDetect(cmy[i])
-        #cv2.imshow('img',cmy[i])
-        #cv2.waitKey()
+
         home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side)
         rospy.loginfo("finished color")
         raw_input('press enter after changing color') 
