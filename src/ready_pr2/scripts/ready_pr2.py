@@ -61,13 +61,13 @@ def sort_lines(mat):
     return sorted_mat
 
 def reshape(mat):
-	#shapes lines into 2 endpoints instead
+    #shapes lines into 2 endpoints instead
     mat = np.reshape(mat,(mat.shape[0]*2,2))
     mat = np.concatenate((mat,np.zeros((mat.shape[0],1))),axis=1)
     return mat
 def transform_points(a,b,c,mat):
-	#rotates and translates mat such that it fits on the plane formed by points a,b,c
-	#a is the top left corner, b is the bottom left corner, is the bottom right corner
+    #rotates and translates mat such that it fits on the plane formed by points a,b,c
+    #a is the top left corner, b is the bottom left corner, is the bottom right corner
     i = (c-b)/np.linalg.norm(b-c)
     j = (a-b)/np.linalg.norm(a-b)
     k = np.cross(i,j)
@@ -76,7 +76,7 @@ def transform_points(a,b,c,mat):
     return np.add(rotated_img,np.matrix(b).T)
 
 def rgb_to_cmy(img):
-	#change rgb to cmy colorspace
+    #change rgb to cmy colorspace
     cmy = 1.0-img/256.0
     min_cmy=np.min(cmy,axis=2)
     for i in range(3):
@@ -86,7 +86,7 @@ def rgb_to_cmy(img):
     return (cmy*255).astype('uint8')
 
 def split_channels(img):
-	#split colors channels of the image and make 3 different images
+    #split colors channels of the image and make 3 different images
     cmy = rgb_to_cmy(img)
     c = np.copy(cmy)
     c[:,:,1:] = 0
@@ -98,21 +98,21 @@ def split_channels(img):
     return [c,m,y]
 
 def edgeDetect(img):
-	#extract contours and then lines from the contours of the image
+    #extract contours and then lines from the contours of the image
 	
     img = cv2.flip(img,0)
     imgShape = img.shape[0:2]
-	#resize the image so that all input images are approximately the same size
+    #resize the image so that all input images are approximately the same size
     imgShape= np.multiply(imgShape,894.0/np.max(imgShape)).astype(int)
     img = cv2.resize(img,(imgShape[1],imgShape[0]))
-	#get image contours
+    #get image contours
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret, thresh = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img = np.zeros(img.shape).astype('uint8')
     cv2.drawContours(img, contours, -1, (255,255,255), 3)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	#extract lines from the contours
+    #extract lines from the contours
     lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,35,10)
     img = np.ones(img.shape)
 	for x1,y1,x2,y2 in lines[0]:
