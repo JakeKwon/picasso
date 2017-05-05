@@ -113,9 +113,9 @@ def edgeDetect(img):
     cv2.drawContours(img, contours, -1, (255,255,255), 3)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #extract lines from the contours
-    lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,35,10)
+    lines = cv2.HoughLinesP(img,1,np.pi/90,10,10,35,5)
     img = np.ones(img.shape)
-	for x1,y1,x2,y2 in lines[0]:
+    for x1,y1,x2,y2 in lines[0]:
         cv2.line(img,(x1,y1),(x2,y2),(0,0,0),2)
     print lines[0].shape
     
@@ -159,14 +159,14 @@ def home_move_cartesian(edges, topLeft, bottomLeft, bottomRight, max_side):
     
     #add lines as waypoints
     for i in range(transformed_edges.shape[1]):
-	wpose.position.x = transformed_edges[0,i]
-    	wpose.position.y = transformed_edges[1,i] + 0.002
+	wpose.position.x = transformed_edges[0,i] + 0.003
+    	wpose.position.y = transformed_edges[1,i] 
     	wpose.position.z = transformed_edges[2,i]
 
         wpose.orientation = orientation
     	waypoints.append(copy.deepcopy(wpose))
         if(i%2==1):
-            wpose.position.y -=.016
+            wpose.position.x -=.016
             waypoints.append(copy.deepcopy(wpose))  
 
 
@@ -216,7 +216,7 @@ if __name__ == "__main__":
      ["/opt/ros/indigo/share/pr2_teleop/launch/teleop_joystick.launch"])
     launch.start()
     #draw image
-    img = cv2.imread('allen_headshot.jpg')
+    img = cv2.imread('../../../party.jpg')
     cmy = split_channels(img)
     for i in range(3):
         edges,max_side = edgeDetect(cmy[i])
